@@ -7,71 +7,58 @@ Created on Tue Mar 17 18:58:15 2026
 import tkinter as tk
 from tkinter import messagebox
 import pyodbc
+import os # Para ejecutar comandos del sistema
+import sys # Para saber qué ejecutable de Python usar
 
-def validar_login():
-    usuario_ingresado = entry_usuario.get()
-    clave_ingresada = entry_password.get()
+def ejecutar_login():
+    usuario = entry_usuario.get()
+    password = entry_password.get()
 
-    # 1. Configuración de conexión (Ajustada a tu servidor verificado)
-    # Usamos 'r' al inicio para evitar el SyntaxWarning por la barra invertida
-    server_name = r"DESKTOP-6IINT1V\SQLEXPRESS" 
-    db_name = "Claves_Master"
-    
-    # Usaremos el Driver 17 que vimos en tu lista, es muy estable
-    conn_str = (
-        f"Driver={{ODBC Driver 17 for SQL Server}};"
-        f"Server={server_name};"
-        f"Database={db_name};"
-        "Trusted_Connection=yes;"
-    )
+    # Datos de tu servidor verificado
+    server = r"DESKTOP-6IINT1V\SQLEXPRESS"
+    db = "Claves_Master"
+    conn_str = f"Driver={{ODBC Driver 17 for SQL Server}};Server={server};Database={db};Trusted_Connection=yes;"
 
     try:
         conexion = pyodbc.connect(conn_str)
         cursor = conexion.cursor()
-
-        # 2. Consulta a la tabla 'Usuarios'
-        query = "SELECT * FROM Usuarios WHERE Username = ? AND PasswordHash = ?"
-        cursor.execute(query, (usuario_ingresado, clave_ingresada))
         
+        # Validación en la base de datos
+        query = "SELECT * FROM Usuarios WHERE Username = ? AND PasswordHash = ?"
+        cursor.execute(query, (usuario, password))
         resultado = cursor.fetchone()
-
-        if resultado:
-            messagebox.showinfo("Acceso Concedido", f"¡Bienvenido al sistema, {usuario_ingresado}!")
-            # ventana.destroy() # Podrías cerrar el login y abrir el menú principal aquí
-        else:
-            messagebox.showwarning("Acceso Denegado", "Usuario o contraseña incorrectos.")
-
+        
         conexion.close()
 
+        if resultado:
+            messagebox.showinfo("Éxito", "Acceso correcto. Abriendo generador...")
+            
+            # 1. Cerramos la ventana actual de login
+            root.destroy()
+            
+            # 2. Abrimos el archivo Generador.py usando el mismo Python de Spyder
+            # sys.executable asegura que use el Python donde instalaste pyodbc
+            os.system(f'"{sys.executable}" Generador.py')
+            
+        else:
+            messagebox.showwarning("Denegado", "Usuario o clave incorrectos")
+
     except Exception as e:
-        messagebox.showerror("Error de Base de Datos", f"No se pudo consultar la base: {e}")
+        messagebox.showerror("Error", f"No se pudo conectar: {e}")
 
-# --- Interfaz Gráfica con Tkinter ---
+# --- Interfaz de Login ---
+root = tk.Tk()
+root.title("Login Claves_Master")
+root.geometry("300x250")
 
-app = tk.Tk()
-app.title("Sistema Claves_Master")
-app.geometry("350x300")
-app.configure(bg="#f0f0f0")
+tk.Label(root, text="USUARIO").pack(pady=10)
+entry_usuario = tk.Entry(root)
+entry_usuario.pack()
 
-# Contenedor principal
-frame = tk.Frame(app, bg="#f0f0f0")
-frame.pack(expand=True)
+tk.Label(root, text="CONTRASEÑA").pack(pady=10)
+entry_password = tk.Entry(root, show="*")
+entry_password.pack()
 
-# Título
-tk.Label(frame, text="INICIO DE SESIÓN", font=("Arial", 14, "bold"), bg="#f0f0f0").pack(pady=20)
+tk.Button(root, text="Entrar", command=ejecutar_login, bg="#0078d4", fg="white").pack(pady=20)
 
-# Campos de entrada
-tk.Label(frame, text="Usuario", bg="#f0f0f0").pack()
-entry_usuario = tk.Entry(frame, width=25, font=("Arial", 11))
-entry_usuario.pack(pady=5)
-
-tk.Label(frame, text="Contraseña", bg="#f0f0f0").pack()
-entry_password = tk.Entry(frame, width=25, font=("Arial", 11), show="*")
-entry_password.pack(pady=5)
-
-# Botón con un poco de estilo
-btn_login = tk.Button(frame, text="Ingresar", command=validar_login, 
-                      bg="#0078d4", fg="white", width=15, font=("Arial", 10, "bold"))
-btn_login.pack(pady=30)
-
-app.mainloop()
+root.mainloop()
