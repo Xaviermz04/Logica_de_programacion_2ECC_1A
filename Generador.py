@@ -89,7 +89,7 @@ root.geometry("400x450")
 root.configure(bg="#f0f2f5")
 
 # Título 
-tk.Label(root, text="SISTEMA DE GENERACIÓN", font=("Segoe UI", 12, "bold"), 
+tk.Label(root, text="SISTEMA DE GENERACIÓN DE CONTRASEÑAS", font=("Segoe UI", 12, "bold"), 
          bg="#f0f2f5", fg="#1a73e8").pack(pady=20)
 
 # Componente de Barra (Scale) - Implementa la validación física de longitud
